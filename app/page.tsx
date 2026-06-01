@@ -16,12 +16,6 @@ export default function Home() {
           Customer Check-in
         </Link>
         <Link
-          href="/staff"
-          className="bg-slate-700 hover:bg-slate-800 text-white font-semibold text-center py-5 px-6 rounded-2xl shadow-md transition-colors text-lg"
-        >
-          Staff Dashboard
-        </Link>
-        <Link
           href="/qr"
           className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-center py-5 px-6 rounded-2xl shadow-sm transition-colors text-lg"
         >
