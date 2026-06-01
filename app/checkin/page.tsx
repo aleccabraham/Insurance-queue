@@ -209,7 +209,7 @@ export default function CheckinPage() {
             </div>
             <p className="text-lg font-semibold leading-snug">
               For general enquiries and complaints, please approach the{' '}
-              <span className="text-orange-300 font-bold">Refund counter</span> directly.
+              <span className="text-orange-300 font-bold">counter</span> directly.
             </p>
             <p className="text-slate-300 text-sm leading-relaxed">
               No token needed — our staff there will assist you.
