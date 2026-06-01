@@ -8,7 +8,7 @@ type FormState = {
   name: string
   phone: string
   purposeText: string   // free-text description of why they're here
-  visitKind: 'renewal' | 'new' | 'refund' | ''  // drives token prefix + priority
+  visitKind: 'renewal' | 'new' | 'refund' | 'enquiry' | 'other_visit' | ''
   ins_type: InsType | ''
   ins_type_other: string // filled when ins_type === 'other'
 }
@@ -40,6 +40,7 @@ export default function CheckinPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
+  const [noToken, setNoToken] = useState(false)
   const [countdown, setCountdown] = useState(30)
 
   // After check-in, count down 30 s then reset for the next customer.
@@ -68,6 +69,13 @@ export default function CheckinPage() {
       setError('Please select a visit type.')
       return
     }
+
+    // No token needed — just show the redirect card, nothing goes to the DB.
+    if (form.visitKind === 'enquiry' || form.visitKind === 'other_visit') {
+      setNoToken(true)
+      return
+    }
+
     if (!form.purposeText.trim()) {
       setError('Please describe your visit purpose.')
       return
@@ -80,6 +88,7 @@ export default function CheckinPage() {
       setError('Please specify your insurance type.')
       return
     }
+
     const phoneRegex = /^\d{10}$/
     if (!phoneRegex.test(form.phone)) {
       setError('Please enter a valid 10-digit mobile number.')
@@ -189,6 +198,37 @@ export default function CheckinPage() {
     setSubmitting(false)
   }
 
+  // ── No-token redirect card (enquiry / other) ─────────────────────────────
+  if (noToken) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-slate-700 to-slate-900 flex flex-col items-center justify-center p-6 text-white">
+        <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
+          <div className="bg-white/10 rounded-3xl p-8 w-full flex flex-col items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-3xl">
+              ℹ️
+            </div>
+            <p className="text-lg font-semibold leading-snug">
+              For general enquiries and complaints, please approach the{' '}
+              <span className="text-orange-300 font-bold">Refund counter</span> directly.
+            </p>
+            <p className="text-slate-300 text-sm leading-relaxed">
+              No token needed — our staff there will assist you.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setNoToken(false)
+              setForm({ name: '', phone: '', purposeText: '', visitKind: '', ins_type: '', ins_type_other: '' })
+            }}
+            className="bg-white/20 hover:bg-white/30 text-white font-semibold px-8 py-3 rounded-2xl transition-colors"
+          >
+            ← Back
+          </button>
+        </div>
+      </main>
+    )
+  }
+
   // ── Confirmation screen ───────────────────────────────────────────────────
   if (confirmation) {
     return (
@@ -274,9 +314,11 @@ export default function CheckinPage() {
           <Field label={<>Visit Type <span className="text-red-500">*</span></>}>
             <div className="flex flex-col gap-2">
               {([
-                { value: 'renewal', label: 'Policy Renewal', sub: 'Your existing policy is expiring soon', color: 'green' },
-                { value: 'new', label: 'New Policy', sub: 'You want to take out a new insurance policy', color: 'blue' },
-                { value: 'refund', label: 'Refund', sub: 'You are here regarding a refund or claim payout', color: 'orange' },
+                { value: 'renewal',     label: 'Policy Renewal',              sub: 'Your existing policy is expiring soon',           color: 'green'  },
+                { value: 'new',         label: 'New Policy',                  sub: 'You want to take out a new insurance policy',     color: 'blue'   },
+                { value: 'refund',      label: 'Refund',                      sub: 'You are here regarding a refund or claim payout', color: 'orange' },
+                { value: 'enquiry',     label: 'General Enquiry / Complaint', sub: 'You have a question or complaint to raise',       color: 'slate'  },
+                { value: 'other_visit', label: 'Other',                       sub: 'Something else not listed above',                color: 'slate'  },
               ] as const).map(({ value, label, sub, color }) => (
                 <button
                   key={value}
@@ -284,19 +326,19 @@ export default function CheckinPage() {
                   onClick={() => setForm({ ...form, visitKind: value })}
                   className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-colors ${
                     form.visitKind === value
-                      ? color === 'green'
-                        ? 'border-green-500 bg-green-50 text-green-800'
-                        : color === 'blue'
-                        ? 'border-blue-500 bg-blue-50 text-blue-800'
-                        : 'border-orange-500 bg-orange-50 text-orange-800'
+                      ? color === 'green'  ? 'border-green-500 bg-green-50 text-green-800'
+                      : color === 'blue'   ? 'border-blue-500 bg-blue-50 text-blue-800'
+                      : color === 'orange' ? 'border-orange-500 bg-orange-50 text-orange-800'
+                      :                     'border-slate-500 bg-slate-50 text-slate-800'
                       : 'border-slate-200 bg-white text-slate-600'
                   }`}
                 >
                   <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                     form.visitKind === value
-                      ? color === 'green' ? 'border-green-500 bg-green-500'
-                        : color === 'blue' ? 'border-blue-500 bg-blue-500'
-                        : 'border-orange-500 bg-orange-500'
+                      ? color === 'green'  ? 'border-green-500 bg-green-500'
+                      : color === 'blue'   ? 'border-blue-500 bg-blue-500'
+                      : color === 'orange' ? 'border-orange-500 bg-orange-500'
+                      :                     'border-slate-500 bg-slate-500'
                       : 'border-slate-300'
                   }`}>
                     {form.visitKind === value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -310,8 +352,8 @@ export default function CheckinPage() {
             </div>
           </Field>
 
-          {/* Insurance type */}
-          <Field label="Insurance Type">
+          {/* Insurance type — hidden for enquiry/other since no policy is involved */}
+          {(form.visitKind === 'enquiry' || form.visitKind === 'other_visit') ? null : <Field label="Insurance Type">
             <select
               required
               value={form.ins_type}
@@ -340,7 +382,7 @@ export default function CheckinPage() {
                 className="input-field mt-2"
               />
             )}
-          </Field>
+          </Field>}
 
           {error && (
             <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">
